@@ -1,6 +1,10 @@
 const crypto = require('crypto');
-const righto = require('righto');
+const { promisify } = require('util');
+
 const defaultConfig = require('./defaultConfig');
+
+const randomBytes = promisify(crypto.randomBytes);
+const pbkdf2 = promisify(crypto.pbkdf2);
 
 function generateHash (config, hash, salt) {
   const combined = Buffer.alloc(hash.length + salt.length + 8);
@@ -14,28 +18,15 @@ function generateHash (config, hash, salt) {
   return combined.toString(config.encoding);
 }
 
-function hashText (text, config, callback) {
-  if (arguments.length === 2) {
-    callback = config;
-    config = defaultConfig;
-  }
-
+async function hashText (text, config) {
   config = {
     ...defaultConfig,
     ...config
   };
 
-  const salt = righto(crypto.randomBytes, config.saltBytes);
-  const hash = righto(crypto.pbkdf2, text, salt, config.iterations, config.hashBytes, config.digest);
-  const hashedPassword = righto.sync(generateHash, config, hash, salt);
-
-  hashedPassword(callback);
+  const salt = await randomBytes(config.saltBytes);
+  const hash = await pbkdf2(text, salt, config.iterations, config.hashBytes, config.digest);
+  return generateHash(config, hash, salt);
 }
 
-module.exports = (...args) => {
-  if (typeof args[args.length - 1] === 'function') {
-    return hashText(...args);
-  } else {
-    return righto(hashText, ...args);
-  }
-};
+module.exports = hashText;

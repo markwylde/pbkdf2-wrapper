@@ -1,17 +1,14 @@
 const crypto = require('crypto');
-const righto = require('righto');
+const { promisify } = require('util');
+
 const defaultConfig = require('./defaultConfig');
+const pbkdf2 = promisify(crypto.pbkdf2);
 
 function checkHash (verifyHash, hash) {
   return verifyHash.toString('binary') === hash;
 }
 
-function verifyHash (text, combined, config, callback) {
-  if (arguments.length === 3) {
-    callback = config;
-    config = {};
-  }
-
+async function verifyHash (text, combined, config) {
   config = {
     ...defaultConfig,
     ...config
@@ -24,16 +21,8 @@ function verifyHash (text, combined, config, callback) {
   const salt = combined.slice(8, saltBytes + 8);
   const hash = combined.toString('binary', saltBytes + 8);
 
-  const verifyHash = righto(crypto.pbkdf2, text, salt, iterations, hashBytes, config.digest);
-  const verified = righto.sync(checkHash, verifyHash, hash);
-
-  verified(callback);
+  const verifyHash = await pbkdf2(text, salt, iterations, hashBytes, config.digest);
+  return checkHash(verifyHash, hash);
 }
 
-module.exports = (...args) => {
-  if (typeof args[args.length - 1] === 'function') {
-    return verifyHash(...args);
-  } else {
-    return righto(verifyHash, ...args);
-  }
-};
+module.exports = verifyHash;

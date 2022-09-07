@@ -12,8 +12,8 @@ npm install --save pbkdf2-wrapper
 
 ## Example Usage
 ```javascript
-const hashText = require('pbkdf2-wrapper/hashText')
-const verifyHash = require('pbkdf2-wrapper/verifyHash')
+import hashText from 'pbkdf2-wrapper/hashText';
+import verifyHash from 'pbkdf2-wrapper/verifyHash';
 
 // config is optional, if not passed will use the following as defaults
 const config = {
@@ -22,22 +22,10 @@ const config = {
   hashBytes: 32,
   saltBytes: 16,
   iterations: 372791
-}
+};
 
-// Promises
-const password = await hashText('test-password', config)
-const equality = await verifyHash('test-password', password, config)
-
-// Callbacks
-hashText('test-password', config, function (error, hash){})
-verifyHash('test-password', password, config, function (err, equality){})
-
-// Deferred callbacks
-const hashPassword = hashText('test-password', config)
-hashPassword(function (error, hash){})
-
-const verifyPassword = verifyHash('test-password', password)
-verifyPassword(function (err, equality){})
+const hash = await hashText('test-password', config);
+const equality = await verifyHash('test-password', hash, config);
 ```
 
 ## License
